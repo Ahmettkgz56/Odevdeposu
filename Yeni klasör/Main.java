@@ -1,39 +1,120 @@
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Scanner;
 
+// 1. Entity (Varlık) Katmanı
+class ProgrammingLanguage {
+    int id;
+    String name;
+
+    public ProgrammingLanguage(int id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+}
+
+class Technology {
+    int id;
+    String name;
+    ProgrammingLanguage programmingLanguage;
+
+    public Technology(int id, String name, ProgrammingLanguage programmingLanguage) {
+        this.id = id;
+        this.name = name;
+        this.programmingLanguage = programmingLanguage;
+    }
+}
+
+// 2. Repository (Veri Erişim) Katmanı
+interface Repository<T> {
+    void add(T entity);
+    void delete(int id);
+    void update(int id, T entity);
+    T getById(int id);
+    List<T> getAll();
+}
+
+class ProgrammingLanguageRepository implements Repository<ProgrammingLanguage> {
+    private final List<ProgrammingLanguage> languages = new ArrayList<>();
+
+    public void add(ProgrammingLanguage entity) {
+        languages.add(entity);
+    }
+
+    public void delete(int id) {
+        languages.removeIf(l -> l.id == id);
+    }
+
+    public void update(int id, ProgrammingLanguage entity) {
+        for (int i = 0; i < languages.size(); i++) {
+            if (languages.get(i).id == id) {
+                languages.set(i, entity);
+                return;
+            }
+        }
+    }
+
+    public ProgrammingLanguage getById(int id) {
+        return languages.stream().filter(l -> l.id == id).findFirst().orElse(null);
+    }
+
+    public List<ProgrammingLanguage> getAll() {
+        return languages;
+    }
+}
+
+// 3. Service (İş Mantığı) Katmanı
+class ProgrammingLanguageService {
+    private final Repository<ProgrammingLanguage> repository;
+
+    public ProgrammingLanguageService(Repository<ProgrammingLanguage> repository) {
+        this.repository = repository;
+    }
+
+    public void addLanguage(int id, String name) {
+        repository.add(new ProgrammingLanguage(id, name));
+    }
+
+    public void listLanguages() {
+        for (ProgrammingLanguage lang : repository.getAll()) {
+            System.out.println(lang.id + ". " + lang.name);
+        }
+    }
+}
+
+// 5. Presentation (Sunum) Katmanı
 public class Main {
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
+        ProgrammingLanguageRepository languageRepository = new ProgrammingLanguageRepository();
+        ProgrammingLanguageService languageService = new ProgrammingLanguageService(languageRepository);
 
-        // 10 elemanlı bir dizi oluşturuyoruz
-        int[] numbers = new int[10];
-        int sum = 0;
+        while (true) {
+            System.out.println("1- Programlama Dili Ekle");
+            System.out.println("2- Programlama Dillerini Listele");
+            System.out.println("3- Çıkış");
+            int choice = scanner.nextInt();
+            scanner.nextLine();
 
-        // Kullanıcıdan 10 adet tam sayı alıyoruz
-        System.out.println("Lütfen 10 adet tam sayı girin:");
-        for (int i = 0; i < 10; i++) {
-            System.out.print("Sayı " + (i + 1) + ": ");
-            numbers[i] = scanner.nextInt();
-            sum += numbers[i];  // Sayıları topluyoruz
-        }
-
-        // Ortalamayı hesaplıyoruz
-        double average = (double) sum / numbers.length;
-        System.out.println("\nDizinin ortalaması: " + average);
-
-        // 50'den büyük olan sayıları listeliyoruz
-        System.out.println("\n50'den büyük olan sayılar:");
-        boolean found = false;
-        for (int num : numbers) {
-            if (num > 50) {
-                System.out.println(num);
-                found = true;
+            switch (choice) {
+                case 1:
+                    System.out.print("ID girin: ");
+                    int id = scanner.nextInt();
+                    scanner.nextLine();
+                    System.out.print("Dil adını girin: ");
+                    String name = scanner.nextLine();
+                    languageService.addLanguage(id, name);
+                    break;
+                case 2:
+                    languageService.listLanguages();
+                    break;
+                case 3:
+                    System.out.println("Çıkılıyor...");
+                    scanner.close();
+                    return;
+                default:
+                    System.out.println("Geçersiz seçim!");
             }
         }
-
-        if (!found) {
-            System.out.println("50'den büyük sayı bulunmamaktadır.");
-        }
-
-        scanner.close();
     }
 }
